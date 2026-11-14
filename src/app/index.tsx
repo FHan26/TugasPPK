@@ -1,98 +1,118 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useRouter } from "expo-router";
+// 1. Impor fungsi kredensial Firebase khusus Native
+import { GoogleAuthProvider, signInWithCredential } from "firebase/auth";
+// 2. Impor GoogleSignin dari library native
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
+import {
+  Alert,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+// 3. Pastikan path ini sesuai, kita hanya butuh 'auth' sekarang
+import { auth } from "../config/firebase"; 
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+// 4. Inisialisasi Google Sign-In dengan Web Client ID dari Firebase Anda
+GoogleSignin.configure({
+  webClientId: "913813945120-tnviceoruu8afe97g9chqnqld8euhjrn.apps.googleusercontent.com",
+});
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
+export default function LoginScreen() {
+  const router = useRouter();
+
+  const handleGoogleLogin = async () => {
+    try {
+      // Cek ketersediaan Google Play Services di Emulator Android
+      await GoogleSignin.hasPlayServices();
+
+      // Panggil antarmuka Login Google bawaan OS Android
+      const userInfo = await GoogleSignin.signIn();
+      
+      // Mengambil idToken (mendukung struktur respons library versi lama dan baru)
+      const idToken = userInfo.data?.idToken || userInfo.idToken; 
+
+      if (!idToken) {
+        throw new Error("Gagal mendapatkan ID Token dari Google");
+      }
+
+      // Buat kredensial Firebase menggunakan token Android tersebut
+      const googleCredential = GoogleAuthProvider.credential(idToken);
+
+      // Otentikasi ke Firebase
+      const result = await signInWithCredential(auth, googleCredential);
+      const user = result.user;
+
+      // Simpan informasi login ke Local Storage agar sesi tidak hilang
+      await AsyncStorage.setItem("userToken", user.uid);
+      await AsyncStorage.setItem("userData", JSON.stringify(user));
+
+      Alert.alert("Sukses", "Login Berhasil!");
+
+      // Arahkan ke halaman Home setelah berhasil
+      router.replace("/home");
+    } catch (error: any) {
+      Alert.alert("Error", error.message);
+      console.error("Gagal Login:", error);
+    }
+  };
+
   return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
-}
+    <View style={styles.container}>
+      <Text style={styles.title}>Tugas Login AsyncStorage & Firebase</Text>
 
-export default function HomeScreen() {
-  return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
+      {/* Sesuai desain UI awal Anda, form dibiarkan sebagai pelengkap desain */}
+      <TextInput style={styles.input} placeholder="Masukkan Username" />
+      <TextInput
+        style={styles.input}
+        placeholder="Masukkan Password"
+        secureTextEntry
+      />
 
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
-
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
-
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
+      <TouchableOpacity
+        style={styles.buttonPrimary}
+        onPress={handleGoogleLogin}
+      >
+        <Text style={styles.buttonText}>
+          LOGIN DENGAN GOOGLE & SIMPAN TOKEN
+        </Text>
+      </TouchableOpacity>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
-  },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
-  },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
+    padding: 20,
+    justifyContent: "center",
+    backgroundColor: "#f5f5f5",
   },
   title: {
-    textAlign: 'center',
+    fontSize: 24,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 30,
   },
-  code: {
-    textTransform: 'uppercase',
+  input: {
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#ccc",
+    padding: 15,
+    borderRadius: 5,
+    marginBottom: 15,
   },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
+  buttonPrimary: {
+    backgroundColor: "#2196F3",
+    padding: 15,
+    borderRadius: 5,
+    alignItems: "center",
+  },
+  buttonText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16,
   },
 });

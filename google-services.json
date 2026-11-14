@@ -1,0 +1,105 @@
+{
+  "project_info": {
+    "project_number": "913813945120",
+    "project_id": "ppk-praktikum-2026-32690",
+    "storage_bucket": "ppk-praktikum-2026-32690.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:913813945120:android:a884172f11e1ef83357545",
+        "android_client_info": {
+          "package_name": "com.farhanganteng.belajardemo"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "913813945120-tnviceoruu8afe97g9chqnqld8euhjrn.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAQ2DZxpMNc7oddGM8PXQNW3_3aEL9804k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "913813945120-tnviceoruu8afe97g9chqnqld8euhjrn.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:913813945120:android:4426c539a2e78741357545",
+        "android_client_info": {
+          "package_name": "com.farhanmuhtaranm.aplikasilogin"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "913813945120-bjkbtrega4hl00qiaje1keb52cj1m1sa.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.farhanmuhtaranm.aplikasilogin",
+            "certificate_hash": "31348ac4305fc343e1fba5bfa5de838c71776e32"
+          }
+        },
+        {
+          "client_id": "913813945120-tnviceoruu8afe97g9chqnqld8euhjrn.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAQ2DZxpMNc7oddGM8PXQNW3_3aEL9804k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "913813945120-tnviceoruu8afe97g9chqnqld8euhjrn.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:913813945120:android:2421b479be756488357545",
+        "android_client_info": {
+          "package_name": "com.tugasPPK"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "913813945120-tnviceoruu8afe97g9chqnqld8euhjrn.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAQ2DZxpMNc7oddGM8PXQNW3_3aEL9804k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "913813945120-tnviceoruu8afe97g9chqnqld8euhjrn.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

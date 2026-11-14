@@ -1,18 +1,50 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { useColorScheme } from 'react-native';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Stack, useRouter, useSegments } from "expo-router";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, View } from "react-native";
 
-import { AnimatedSplashOverlay } from '@/components/animated-icon';
-import AppTabs from '@/components/app-tabs';
+export default function RootLayout() {
+  const [isReady, setIsReady] = useState(false);
+  const router = useRouter();
+  const segments = useSegments();
 
-SplashScreen.preventAutoHideAsync();
+  useEffect(() => {
+    const checkLoginStatus = async () => {
+      try {
+        const userToken = await AsyncStorage.getItem("userToken");
 
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
+        // Ganti pengecekan (auth) menjadi mengecek apakah sedang di halaman home
+        const inHome = segments[0] === "home";
+
+        if (userToken && !inHome) {
+          // Bypass ke halaman home jika token aktif
+          router.replace("/home");
+        } else if (!userToken && inHome) {
+          // Kembalikan ke login jika mencoba akses home tanpa token
+          router.replace("/");
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setIsReady(true);
+      }
+    };
+
+    checkLoginStatus();
+  }, [segments]);
+
+  if (!isReady) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
+  }
+
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <AnimatedSplashOverlay />
-      <AppTabs />
-    </ThemeProvider>
+    <Stack>
+      <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="home" options={{ title: "Data Mahasiswa" }} />
+    </Stack>
   );
 }
