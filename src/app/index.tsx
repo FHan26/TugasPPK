@@ -1,10 +1,15 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useRouter } from "expo-router";
-// 1. Impor fungsi kredensial Firebase khusus Native
-import { GoogleAuthProvider, signInWithCredential } from "firebase/auth";
-// 2. Impor GoogleSignin dari library native
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
+import { useRouter } from "expo-router";
 import {
+  GoogleAuthProvider,
+  signInWithCredential,
+  signInWithEmailAndPassword,
+  User,
+} from "firebase/auth";
+import { useState } from "react";
+import {
+  ActivityIndicator,
   Alert,
   StyleSheet,
   Text,
@@ -12,50 +17,85 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-// 3. Pastikan path ini sesuai, kita hanya butuh 'auth' sekarang
-import { auth } from "../config/firebase"; 
+import { auth } from "../config/firebase";
 
-// 4. Inisialisasi Google Sign-In dengan Web Client ID dari Firebase Anda
+// Web Client ID dari Firebase / Google Cloud (tipe "Web client")
 GoogleSignin.configure({
-  webClientId: "913813945120-tnviceoruu8afe97g9chqnqld8euhjrn.apps.googleusercontent.com",
+  webClientId:
+    "913813945120-tnviceoruu8afe97g9chqnqld8euhjrn.apps.googleusercontent.com",
 });
+
+// Simpan info login ke AsyncStorage: token asli Firebase + data ringkas user
+const saveSession = async (user: User) => {
+  const t = await user.getIdTokenResult();
+  await AsyncStorage.setItem("userToken", t.token);
+  await AsyncStorage.setItem("tokenExpiry", t.expirationTime);
+  await AsyncStorage.setItem(
+    "userData",
+    JSON.stringify({
+      uid: user.uid,
+      email: user.email,
+      displayName: user.displayName,
+      photoURL: user.photoURL,
+    }),
+  );
+};
 
 export default function LoginScreen() {
   const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleError = (error: any) => {
+    console.log("LOGIN ERROR:", error?.code, error?.message);
+    Alert.alert("Login gagal", `${error?.code ?? ""}\n${error?.message ?? error}`);
+  };
 
   const handleGoogleLogin = async () => {
+    setLoading(true);
     try {
-      // Cek ketersediaan Google Play Services di Emulator Android
+      // Cek Google Play Services di emulator/perangkat Android
       await GoogleSignin.hasPlayServices();
 
-      // Panggil antarmuka Login Google bawaan OS Android
-      const userInfo = await GoogleSignin.signIn();
-      
-      // Mengambil idToken (mendukung struktur respons library versi lama dan baru)
-      const idToken = userInfo.data?.idToken || userInfo.idToken; 
+      const response = await GoogleSignin.signIn();
 
-      if (!idToken) {
-        throw new Error("Gagal mendapatkan ID Token dari Google");
-      }
+      // Pengguna menutup pilihan akun: bukan error
+      if (response.type !== "success") return;
 
-      // Buat kredensial Firebase menggunakan token Android tersebut
-      const googleCredential = GoogleAuthProvider.credential(idToken);
+      const idToken = response.data.idToken;
+      if (!idToken) throw new Error("Gagal mendapatkan ID Token dari Google");
 
-      // Otentikasi ke Firebase
-      const result = await signInWithCredential(auth, googleCredential);
-      const user = result.user;
+      const credential = GoogleAuthProvider.credential(idToken);
+      const result = await signInWithCredential(auth, credential);
 
-      // Simpan informasi login ke Local Storage agar sesi tidak hilang
-      await AsyncStorage.setItem("userToken", user.uid);
-      await AsyncStorage.setItem("userData", JSON.stringify(user));
-
-      Alert.alert("Sukses", "Login Berhasil!");
-
-      // Arahkan ke halaman Home setelah berhasil
+      await saveSession(result.user);
       router.replace("/home");
-    } catch (error: any) {
-      Alert.alert("Error", error.message);
-      console.error("Gagal Login:", error);
+    } catch (e) {
+      handleError(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEmailLogin = async () => {
+    if (!email.trim() || !password) {
+      Alert.alert("Perhatian", "Email dan password wajib diisi.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const result = await signInWithEmailAndPassword(
+        auth,
+        email.trim(),
+        password,
+      );
+      await saveSession(result.user);
+      router.replace("/home");
+    } catch (e) {
+      handleError(e);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -63,21 +103,40 @@ export default function LoginScreen() {
     <View style={styles.container}>
       <Text style={styles.title}>Tugas Login AsyncStorage & Firebase</Text>
 
-      {/* Sesuai desain UI awal Anda, form dibiarkan sebagai pelengkap desain */}
-      <TextInput style={styles.input} placeholder="Masukkan Username" />
       <TextInput
         style={styles.input}
-        placeholder="Masukkan Password"
+        placeholder="Email"
+        autoCapitalize="none"
+        keyboardType="email-address"
+        value={email}
+        onChangeText={setEmail}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Password"
         secureTextEntry
+        value={password}
+        onChangeText={setPassword}
       />
 
       <TouchableOpacity
-        style={styles.buttonPrimary}
-        onPress={handleGoogleLogin}
+        style={[styles.buttonPrimary, loading && { opacity: 0.6 }]}
+        onPress={handleEmailLogin}
+        disabled={loading}
       >
-        <Text style={styles.buttonText}>
-          LOGIN DENGAN GOOGLE & SIMPAN TOKEN
-        </Text>
+        {loading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.buttonText}>LOGIN EMAIL & PASSWORD</Text>
+        )}
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[styles.buttonGoogle, loading && { opacity: 0.6 }]}
+        onPress={handleGoogleLogin}
+        disabled={loading}
+      >
+        <Text style={styles.buttonText}>LOGIN DENGAN GOOGLE</Text>
       </TouchableOpacity>
     </View>
   );
@@ -109,10 +168,13 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 5,
     alignItems: "center",
+    marginBottom: 12,
   },
-  buttonText: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 16,
+  buttonGoogle: {
+    backgroundColor: "#DB4437",
+    padding: 15,
+    borderRadius: 5,
+    alignItems: "center",
   },
+  buttonText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
 });
