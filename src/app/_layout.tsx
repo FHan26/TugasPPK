@@ -68,7 +68,7 @@ export default function RootLayout() {
     <View style={{ flex: 1 }}>
       <Stack>
         <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="home" options={{ title: "Data Mahasiswa" }} />
+        <Stack.Screen name="home" options={{ headerShown: false }} />
       </Stack>
 
       {!ready && (
@@ -82,13 +82,13 @@ export default function RootLayout() {
 
 const styles = StyleSheet.create({
   loading: {
-  position: "absolute",
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  justifyContent: "center",
-  alignItems: "center",
-  backgroundColor: "#fff",
-},
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fff",
+  },
 });
